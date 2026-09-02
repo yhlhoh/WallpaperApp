@@ -4,8 +4,24 @@ function setMessage(text, type = '') {
   msg.textContent = text;
 }
 
+let csrfToken = '';
+
+async function ensureCsrfToken() {
+  if (csrfToken) return csrfToken;
+  const res = await fetch('/api/csrf-token', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to get CSRF token');
+  const data = await res.json();
+  csrfToken = data.csrfToken;
+  return csrfToken;
+}
+
 async function request(path, options) {
-  const res = await fetch(path, options);
+  const opts = options ? { ...options } : {};
+  if (opts.method && !['GET', 'HEAD'].includes(opts.method.toUpperCase())) {
+    const token = await ensureCsrfToken();
+    opts.headers = { ...(opts.headers || {}), 'x-csrf-token': token };
+  }
+  const res = await fetch(path, opts);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
@@ -63,6 +79,7 @@ async function loadMedia() {
   rows.innerHTML = '';
   setMessage('Loading media...');
   try {
+    await ensureCsrfToken();
     const data = await request('/api/media');
     for (const item of data.items) rows.appendChild(rowTemplate(item));
     setMessage(`Loaded ${data.items.length} media item(s).`);

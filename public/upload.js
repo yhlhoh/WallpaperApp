@@ -4,6 +4,17 @@ async function readQuota() {
   return res.json();
 }
 
+let csrfToken = '';
+
+async function ensureCsrfToken() {
+  if (csrfToken) return csrfToken;
+  const res = await fetch('/api/csrf-token', { cache: 'no-store' });
+  if (!res.ok) throw new Error('Failed to get CSRF token');
+  const data = await res.json();
+  csrfToken = data.csrfToken;
+  return csrfToken;
+}
+
 function setNotice(el, text, type = '') {
   el.className = `notice${type ? ` ${type}` : ''}`;
   el.textContent = text;
@@ -21,9 +32,13 @@ async function refreshQuota() {
 }
 
 async function uploadFlow(file, durationSeconds) {
+  const token = await ensureCsrfToken();
   const createRes = await fetch('/api/upload-url', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-csrf-token': token,
+    },
     body: JSON.stringify({
       filename: file.name,
       mimeType: file.type,
@@ -43,7 +58,10 @@ async function uploadFlow(file, durationSeconds) {
 
   if (!uploadRes.ok) throw new Error(`S3 upload failed (${uploadRes.status})`);
 
-  const confirmRes = await fetch(`/api/media/${createData.mediaId}/confirm`, { method: 'POST' });
+  const confirmRes = await fetch(`/api/media/${createData.mediaId}/confirm`, {
+    method: 'POST',
+    headers: { 'x-csrf-token': token },
+  });
   if (!confirmRes.ok) throw new Error('Upload stored but failed to confirm media');
 }
 

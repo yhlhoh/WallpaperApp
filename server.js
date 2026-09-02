@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const Database = require('better-sqlite3');
+const rateLimit = require('express-rate-limit');
+const csrf = require('csurf');
 const path = require('path');
 const { randomUUID } = require('crypto');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -47,6 +49,30 @@ CREATE TABLE IF NOT EXISTS upload_limits (
 
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
+
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 180,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const csrfProtection = csrf({
+  cookie: {
+    key: 'wallpaper_csrf',
+    httpOnly: true,
+    sameSite: 'lax',
+  },
+});
+
+app.use(globalLimiter);
 app.use('/assets', express.static(path.join(__dirname, 'public')));
 
 function getDateKeyUtcPlus8(date = new Date()) {
@@ -149,7 +175,11 @@ app.get('/api/stats/upload-limit', ensureSession, (req, res) => {
   });
 });
 
-app.post('/api/upload-url', ensureSession, async (req, res) => {
+app.get('/api/csrf-token', ensureSession, csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+app.post('/api/upload-url', ensureSession, uploadLimiter, csrfProtection, async (req, res) => {
   const { filename, mimeType, fileSize, durationSeconds } = req.body || {};
   if (!BUCKET || !REGION) return res.status(500).json({ error: 'S3 is not configured' });
   if (!filename || !mimeType || !Number.isFinite(fileSize)) {
@@ -205,7 +235,7 @@ app.post('/api/upload-url', ensureSession, async (req, res) => {
   }
 });
 
-app.post('/api/media/:id/confirm', ensureSession, (req, res) => {
+app.post('/api/media/:id/confirm', ensureSession, uploadLimiter, csrfProtection, (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid media id' });
 
@@ -258,7 +288,7 @@ app.get('/api/media', requireAdmin, async (_req, res) => {
   });
 });
 
-app.patch('/api/media/:id', requireAdmin, (req, res) => {
+app.patch('/api/media/:id', requireAdmin, uploadLimiter, csrfProtection, (req, res) => {
   const id = Number(req.params.id);
   const { durationSeconds, pinned } = req.body || {};
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid media id' });
@@ -286,7 +316,7 @@ app.patch('/api/media/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-app.delete('/api/media/:id', requireAdmin, async (req, res) => {
+app.delete('/api/media/:id', requireAdmin, uploadLimiter, csrfProtection, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid media id' });
 
@@ -304,6 +334,13 @@ app.delete('/api/media/:id', requireAdmin, async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+app.use((err, _req, res, next) => {
+  if (err && err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({ error: 'Invalid CSRF token' });
+  }
+  return next(err);
 });
 
 app.listen(PORT, () => {
