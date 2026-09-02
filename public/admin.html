@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wallpaper Admin</title>
+    <link rel="stylesheet" href="/assets/common.css" />
+    <script defer src="/assets/admin.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:12px;">
+        <div>
+          <h1>Admin Media Manager</h1>
+          <p class="notice">Pin media to keep it from retention cleanup. Update duration to tune playback pacing.</p>
+        </div>
+        <button id="refreshBtn" type="button">Refresh</button>
+      </div>
+
+      <section class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Duration</th>
+              <th>Pinned</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Expires</th>
+              <th>Preview</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="msg" class="notice"></p>
+      </section>
+    </main>
+  </body>
+</html>

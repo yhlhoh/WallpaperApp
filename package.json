@@ -1,0 +1,27 @@
+{
+  "name": "wallpaperapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/yhlhoh/WallpaperApp"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1124.0",
+    "@aws-sdk/s3-request-presigner": "^3.1124.0",
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "uuid": "^14.0.2"
+  }
+}
