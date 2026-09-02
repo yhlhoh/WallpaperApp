@@ -32,6 +32,7 @@ Open:
 
 - Upload/Admin pages include language switcher (English / 简体中文).
 - Locale is stored in browser `localStorage` and can also be forced via query parameter, e.g. `?lang=zh-CN`.
+- Visiting `/upload`, `/admin`, or `/play` without `lang` will auto-redirect using `Accept-Language`.
 
 ## Environment variables
 

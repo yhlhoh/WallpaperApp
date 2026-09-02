@@ -19,6 +19,7 @@ const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES || 250 * 1024 * 102
 const DEFAULT_DURATION_SECONDS = Number(process.env.DEFAULT_DURATION_SECONDS || 20);
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 const SID_COOKIE = 'wallpaper_sid';
+const LOCALE_COOKIE = 'wallpaper_locale';
 
 if (!BUCKET || !REGION) {
   console.warn('S3_BUCKET and S3_REGION should be configured for uploads to work.');
@@ -110,6 +111,44 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
+function normalizeLocale(rawLocale) {
+  if (!rawLocale) return null;
+  const lower = String(rawLocale).toLowerCase();
+  if (lower.startsWith('zh')) return 'zh-CN';
+  if (lower.startsWith('en')) return 'en';
+  return null;
+}
+
+function detectPreferredLocale(req) {
+  const fromCookie = normalizeLocale(req.cookies[LOCALE_COOKIE]);
+  if (fromCookie) return fromCookie;
+
+  const accepted = req.acceptsLanguages(['zh-CN', 'zh', 'en']);
+  const normalized = normalizeLocale(accepted);
+  return normalized || 'en';
+}
+
+function localeAwarePageHandler(fileName, middlewares = []) {
+  return [
+    ...middlewares,
+    (req, res) => {
+      const localeFromQuery = normalizeLocale(req.query.lang);
+      if (!localeFromQuery) {
+        const locale = detectPreferredLocale(req);
+        const search = new URLSearchParams(req.query);
+        search.set('lang', locale);
+        return res.redirect(`${req.path}?${search.toString()}`);
+      }
+
+      res.cookie(LOCALE_COOKIE, localeFromQuery, {
+        sameSite: 'lax',
+        maxAge: 365 * 24 * 60 * 60 * 1000,
+      });
+      return res.sendFile(path.join(__dirname, 'public', fileName));
+    },
+  ];
+}
+
 function encodeKeyForUrl(key) {
   return key.split('/').map(encodeURIComponent).join('/');
 }
@@ -151,17 +190,11 @@ app.get('/', (_req, res) => {
   res.redirect('/play');
 });
 
-app.get('/upload', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-});
+app.get('/upload', ...localeAwarePageHandler('upload.html'));
 
-app.get('/admin', requireAdmin, (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
+app.get('/admin', ...localeAwarePageHandler('admin.html', [requireAdmin]));
 
-app.get('/play', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'play.html'));
-});
+app.get('/play', ...localeAwarePageHandler('play.html'));
 
 app.get('/api/stats/upload-limit', ensureSession, (req, res) => {
   const key = getDateKeyUtcPlus8();

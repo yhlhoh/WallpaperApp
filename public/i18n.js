@@ -27,6 +27,17 @@
         uploading: 'Uploading...',
         uploadDone: 'Upload completed and added to playlist.',
         confirmError: 'Upload stored but failed to confirm media',
+        s3UploadError: 'S3 upload failed ({status})',
+        galleryTitle: 'Current Gallery',
+        refreshGalleryBtn: 'Refresh Gallery',
+        galleryLoading: 'Loading gallery...',
+        galleryLoaded: 'Loaded {count} item(s).',
+        galleryEmpty: 'No media in gallery yet.',
+        galleryLoadError: 'Failed to load gallery',
+        galleryTypeImage: 'Image',
+        galleryTypeVideo: 'Video',
+        galleryPinned: 'Pinned',
+        galleryDuration: '{seconds}s',
       },
       admin: {
         pageTitle: 'Wallpaper Admin',
@@ -85,6 +96,17 @@
         uploading: '上传中...',
         uploadDone: '上传完成，已加入播放列表。',
         confirmError: '上传完成但确认入库失败',
+        s3UploadError: 'S3 上传失败（{status}）',
+        galleryTitle: '当前画廊',
+        refreshGalleryBtn: '刷新画廊',
+        galleryLoading: '正在加载画廊...',
+        galleryLoaded: '已加载 {count} 个媒体。',
+        galleryEmpty: '画廊中暂无媒体。',
+        galleryLoadError: '加载画廊失败',
+        galleryTypeImage: '图片',
+        galleryTypeVideo: '视频',
+        galleryPinned: '已置顶',
+        galleryDuration: '{seconds}秒',
       },
       admin: {
         pageTitle: '壁纸管理',
@@ -190,6 +212,9 @@
     el.value = locale;
     el.addEventListener('change', () => {
       setLocale(el.value);
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', locale);
+      window.history.replaceState({}, '', url.toString());
       applyTranslations(document);
       if (typeof onChange === 'function') onChange(locale);
     });

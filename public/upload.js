@@ -20,6 +20,53 @@ function setNotice(el, text, type = '') {
   el.textContent = text;
 }
 
+function setPlayUrl() {
+  const playUrl = document.getElementById('playUrl');
+  const lang = window.I18N.getLocale();
+  const href = `/play?lang=${encodeURIComponent(lang)}`;
+  playUrl.textContent = `${window.location.origin}${href}`;
+  playUrl.href = href;
+}
+
+function createGalleryCard(item) {
+  const card = document.createElement('article');
+  card.className = 'gallery-item';
+  const media =
+    item.type === 'video'
+      ? `<video class="gallery-media" src="${item.url}" muted playsinline preload="metadata"></video>`
+      : `<img class="gallery-media" src="${item.url}" alt="" loading="lazy">`;
+
+  card.innerHTML = `
+    ${media}
+    <div class="gallery-meta">
+      <div>#${item.id} · ${item.type === 'video' ? window.I18N.t('upload.galleryTypeVideo') : window.I18N.t('upload.galleryTypeImage')}</div>
+      <div>${window.I18N.t('upload.galleryDuration', { seconds: item.durationSeconds })}</div>
+    </div>
+  `;
+  return card;
+}
+
+async function refreshGallery() {
+  const gallery = document.getElementById('gallery');
+  const msg = document.getElementById('galleryMsg');
+  setNotice(msg, window.I18N.t('upload.galleryLoading'));
+  gallery.innerHTML = '';
+  try {
+    const res = await fetch('/api/playlist');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || window.I18N.t('upload.galleryLoadError'));
+    const activeItems = data.items || [];
+    if (activeItems.length === 0) {
+      setNotice(msg, window.I18N.t('upload.galleryEmpty'));
+      return;
+    }
+    activeItems.forEach((item) => gallery.appendChild(createGalleryCard(item)));
+    setNotice(msg, window.I18N.t('upload.galleryLoaded', { count: activeItems.length }));
+  } catch (error) {
+    setNotice(msg, error.message, 'error');
+  }
+}
+
 async function refreshQuota() {
   const quotaInfo = document.getElementById('quotaInfo');
   try {
@@ -61,7 +108,7 @@ async function uploadFlow(file, durationSeconds) {
     body: file,
   });
 
-  if (!uploadRes.ok) throw new Error(`S3 upload failed (${uploadRes.status})`);
+  if (!uploadRes.ok) throw new Error(window.I18N.t('upload.s3UploadError', { status: uploadRes.status }));
 
   const confirmRes = await fetch(`/api/media/${createData.mediaId}/confirm`, {
     method: 'POST',
@@ -74,14 +121,15 @@ window.addEventListener('DOMContentLoaded', () => {
   window.I18N.applyTranslations(document);
   window.I18N.bindLanguageSwitcher('langSelect', () => {
     refreshQuota();
+    refreshGallery();
+    setPlayUrl();
   });
   const form = document.getElementById('uploadForm');
   const result = document.getElementById('uploadResult');
-  const playUrl = document.getElementById('playUrl');
-  playUrl.textContent = `${window.location.origin}/play`;
-  playUrl.href = '/play';
+  setPlayUrl();
 
   document.getElementById('refreshQuota').addEventListener('click', refreshQuota);
+  document.getElementById('refreshGallery').addEventListener('click', refreshGallery);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -96,6 +144,7 @@ window.addEventListener('DOMContentLoaded', () => {
       form.reset();
       document.getElementById('duration').value = '20';
       await refreshQuota();
+      await refreshGallery();
     } catch (error) {
       setNotice(result, error.message, 'error');
       await refreshQuota();
@@ -103,4 +152,5 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   refreshQuota();
+  refreshGallery();
 });

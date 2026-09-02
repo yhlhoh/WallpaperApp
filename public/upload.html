@@ -43,6 +43,15 @@
           <p><a id="playUrl" href="/play" target="_blank" rel="noopener"></a></p>
           <p class="notice" data-i18n="upload.playbackNote">Videos are played muted automatically. Old unpinned media is auto-deleted by retention policy.</p>
         </section>
+
+        <section class="card" style="grid-column:1/-1;">
+          <div class="row" style="justify-content:space-between;">
+            <h2 data-i18n="upload.galleryTitle" style="margin:0;">Current Gallery</h2>
+            <button class="secondary" id="refreshGallery" type="button" data-i18n="upload.refreshGalleryBtn">Refresh Gallery</button>
+          </div>
+          <p class="notice" id="galleryMsg"></p>
+          <div id="gallery" class="gallery"></div>
+        </section>
       </div>
     </main>
   </body>
