@@ -3,34 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Wallpaper Admin</title>
+    <title data-i18n="admin.pageTitle">Wallpaper Admin</title>
     <link rel="stylesheet" href="/assets/common.css" />
+    <script defer src="/assets/i18n.js"></script>
     <script defer src="/assets/admin.js"></script>
   </head>
   <body>
     <main class="shell">
+      <div class="row" style="justify-content:flex-end;margin-bottom:12px;">
+        <label for="langSelect" data-i18n="common.language" style="margin:0;">Language</label>
+        <select id="langSelect" style="width:140px;">
+          <option value="en" data-i18n="common.english">English</option>
+          <option value="zh-CN" data-i18n="common.chineseSimplified">简体中文</option>
+        </select>
+      </div>
       <div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:12px;">
         <div>
-          <h1>Admin Media Manager</h1>
-          <p class="notice">Pin media to keep it from retention cleanup. Update duration to tune playback pacing.</p>
+          <h1 data-i18n="admin.heading">Admin Media Manager</h1>
+          <p class="notice" data-i18n="admin.subHeading">Pin media to keep it from retention cleanup. Update duration to tune playback pacing.</p>
         </div>
-        <button id="refreshBtn" type="button">Refresh</button>
+        <button id="refreshBtn" type="button" data-i18n="admin.refreshBtn">Refresh</button>
       </div>
 
       <section class="card">
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Duration</th>
-              <th>Pinned</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Expires</th>
-              <th>Preview</th>
-              <th>Actions</th>
+              <th data-i18n="admin.colId">ID</th>
+              <th data-i18n="admin.colName">Name</th>
+              <th data-i18n="admin.colType">Type</th>
+              <th data-i18n="admin.colDuration">Duration</th>
+              <th data-i18n="admin.colPinned">Pinned</th>
+              <th data-i18n="admin.colStatus">Status</th>
+              <th data-i18n="admin.colCreated">Created</th>
+              <th data-i18n="admin.colExpires">Expires</th>
+              <th data-i18n="admin.colPreview">Preview</th>
+              <th data-i18n="admin.colActions">Actions</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>

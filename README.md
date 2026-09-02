@@ -28,6 +28,11 @@ Open:
 - Admin page: `http://localhost:3000/admin`
 - Playback page: `http://localhost:3000/play`
 
+## i18n
+
+- Upload/Admin pages include language switcher (English / 简体中文).
+- Locale is stored in browser `localStorage` and can also be forced via query parameter, e.g. `?lang=zh-CN`.
+
 ## Environment variables
 
 - `S3_BUCKET`: target S3 bucket for uploads

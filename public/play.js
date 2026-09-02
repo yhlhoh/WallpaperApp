@@ -1,6 +1,7 @@
 const slideA = document.getElementById('a');
 const slideB = document.getElementById('b');
 const empty = document.getElementById('empty');
+window.I18N.applyTranslations(document);
 
 let playlist = [];
 let index = 0;

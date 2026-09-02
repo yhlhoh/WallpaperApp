@@ -1,6 +1,6 @@
 async function readQuota() {
   const res = await fetch('/api/stats/upload-limit');
-  if (!res.ok) throw new Error('Failed to read quota');
+  if (!res.ok) throw new Error(window.I18N.t('upload.readQuotaError'));
   return res.json();
 }
 
@@ -9,7 +9,7 @@ let csrfToken = '';
 async function ensureCsrfToken() {
   if (csrfToken) return csrfToken;
   const res = await fetch('/api/csrf-token', { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to get CSRF token');
+  if (!res.ok) throw new Error(window.I18N.t('upload.csrfError'));
   const data = await res.json();
   csrfToken = data.csrfToken;
   return csrfToken;
@@ -25,7 +25,12 @@ async function refreshQuota() {
   try {
     const quota = await readQuota();
     const reset = new Date(quota.resetAt).toLocaleString();
-    setNotice(quotaInfo, `Used ${quota.used}/${quota.limit}. Remaining ${quota.remaining}. Reset at ${reset} (UTC+8 midnight).`);
+    setNotice(quotaInfo, window.I18N.t('upload.quotaText', {
+      used: quota.used,
+      limit: quota.limit,
+      remaining: quota.remaining,
+      reset,
+    }));
   } catch (error) {
     setNotice(quotaInfo, error.message, 'error');
   }
@@ -48,7 +53,7 @@ async function uploadFlow(file, durationSeconds) {
   });
 
   const createData = await createRes.json();
-  if (!createRes.ok) throw new Error(createData.error || 'Failed to create upload URL');
+  if (!createRes.ok) throw new Error(createData.error || window.I18N.t('upload.createUploadUrlError'));
 
   const uploadRes = await fetch(createData.uploadUrl, {
     method: 'PUT',
@@ -62,10 +67,14 @@ async function uploadFlow(file, durationSeconds) {
     method: 'POST',
     headers: { 'x-csrf-token': token },
   });
-  if (!confirmRes.ok) throw new Error('Upload stored but failed to confirm media');
+  if (!confirmRes.ok) throw new Error(window.I18N.t('upload.confirmError'));
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+  window.I18N.applyTranslations(document);
+  window.I18N.bindLanguageSwitcher('langSelect', () => {
+    refreshQuota();
+  });
   const form = document.getElementById('uploadForm');
   const result = document.getElementById('uploadResult');
   const playUrl = document.getElementById('playUrl');
@@ -78,12 +87,12 @@ window.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     const file = document.getElementById('file').files[0];
     const duration = Number(document.getElementById('duration').value);
-    if (!file) return setNotice(result, 'Please select a media file.', 'error');
+    if (!file) return setNotice(result, window.I18N.t('upload.selectMediaError'), 'error');
 
-    setNotice(result, 'Uploading...');
+    setNotice(result, window.I18N.t('upload.uploading'));
     try {
       await uploadFlow(file, duration);
-      setNotice(result, 'Upload completed and added to playlist.', 'success');
+      setNotice(result, window.I18N.t('upload.uploadDone'), 'success');
       form.reset();
       document.getElementById('duration').value = '20';
       await refreshQuota();

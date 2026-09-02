@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Wallpaper Playback</title>
+    <title data-i18n="play.pageTitle">Wallpaper Playback</title>
     <style>
       html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
       #root { position: relative; width: 100%; height: 100%; }
@@ -34,13 +34,14 @@
         background: #02060c;
       }
     </style>
+    <script defer src="/assets/i18n.js"></script>
     <script defer src="/assets/play.js"></script>
   </head>
   <body>
     <div id="root">
       <div id="a" class="slide"><img alt="" /><video muted playsinline preload="auto"></video></div>
       <div id="b" class="slide"><img alt="" /><video muted playsinline preload="auto"></video></div>
-      <div id="empty">No media available yet.</div>
+      <div id="empty" data-i18n="play.empty">No media available yet.</div>
     </div>
   </body>
 </html>
